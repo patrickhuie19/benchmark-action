@@ -1,0 +1,106 @@
+name: 'Go Benchmark Action'
+description: 'Run Go benchmarks and optionally publish results to GitHub Pages'
+inputs:
+  benchmarks:
+    description: 'Comma-separated list of benchmarks to run (e.g., BenchmarkOne, BenchmarkTwo). Set to "from-pr" to extract from PR description.'
+    required: false
+    default: 'from-pr'
+
+  trigger-branches:
+    description: 'Comma-separated list of branches for which merges will trigger this action.'
+    required: true
+
+  use-gh-pages:
+    description: 'Flag to enable publishing results to GitHub Pages (true or false)'
+    required: false
+    default: 'false'
+
+  github-token:
+    description: 'GitHub token for authentication (GITHUB_TOKEN or a personal access token). Required if use-gh-pages is true.'
+    required: false
+
+  gh-pages-branch:
+    description: 'The GitHub Pages branch to push results to (defaults to gh-pages). Required if use-gh-pages is true.'
+    required: false
+    default: 'gh-pages'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Go Environment
+      uses: actions/setup-go@v4
+      with:
+        go-version: 'stable'
+
+    - name: Analyze GitHub Event
+      id: analyze-event
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "IS_MERGE=false" >> $GITHUB_ENV
+          echo "IS_PR=true" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "push" && contains(fromJson('["' + replace('${{ inputs.trigger-branches }}', ', ', '","') + '"]'), '${{ github.ref_name }}') ]]; then
+          echo "IS_MERGE=true" >> $GITHUB_ENV
+          echo "IS_PR=false" >> $GITHUB_ENV
+        else
+          echo "IS_MERGE=false" >> $GITHUB_ENV
+          echo "IS_PR=false" >> $GITHUB_ENV
+        fi
+      shell: bash
+
+    - name: Determine Benchmarks to Run
+      if: $IS_PR == 'true' || $IS_MERGE == 'true'
+      id: set-benchmarks
+      run: |
+        if [[ "${{ inputs.benchmarks }}" == "from-pr" && $IS_PR == "true" ]]; then
+          BENCHMARKS=$(echo '${{ github.event.pull_request.body }}' | sed -n -e 's/^.*BENCHMARKS: //p')
+        else
+          BENCHMARKS=${{ inputs.benchmarks }}
+        fi
+        echo "BENCHMARKS=$BENCHMARKS" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Run Specified Go Benchmarks
+      if: $IS_PR == 'true' || $IS_MERGE == 'true'
+      run: go test -bench "$BENCHMARKS" | tee output.txt
+      shell: bash
+
+    - name: Download Previous Benchmark Data
+      if: $IS_PR == 'true' || $IS_MERGE == 'true'
+      uses: actions/cache@v2
+      with:
+        path: ./cache
+        key: ${{ runner.os }}-benchmark
+
+    - name: Run github-action-benchmark for PRs
+      if: $IS_PR == 'true'
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'go'
+        output-file-path: output.txt
+        external-data-json-path: './cache/benchmark-data.json'
+        fail-on-alert: true
+        gh-pages-branch: ${{ inputs.gh-pages-branch }}
+        auto-push: ${{ $IS_MERGE == 'true' && inputs.use-gh-pages == 'true' }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Run github-action-benchmark for Merges
+      if: $IS_MERGE == 'true'
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'go'
+        output-file-path: output.txt
+        external-data-json-path: './cache/benchmark-data.json'
+        fail-on-alert: false
+        comment-on-alert: true
+        github-token: ${{ inputs.github-token }}
+
+    - name: Upload Updated Benchmark Data
+      if: $IS_MERGE == 'true'
+      uses: actions/cache@v2
+      with:
+        path: ./cache
+        key: ${{ runner.os }}-benchmark
+        restore-keys: ${{ runner.os }}-benchmark
