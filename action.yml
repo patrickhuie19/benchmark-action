@@ -41,14 +41,21 @@ runs:
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           echo "IS_MERGE=false" >> $GITHUB_ENV
           echo "IS_PR=true" >> $GITHUB_ENV
-        elif [[ "${{ github.event_name }}" == "push" && contains(fromJson('["' + replace('${{ inputs.trigger-branches }}', ', ', '","') + '"]'), '${{ github.ref_name }}') ]]; then
-          echo "IS_MERGE=true" >> $GITHUB_ENV
-          echo "IS_PR=false" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "push" ]]; then
+          TRIGGER_BRANCHES="${{ inputs.trigger-branches }}"
+          if [[ "$TRIGGER_BRANCHES" == *"${{ github.ref_name }}"* ]]; then
+            echo "IS_MERGE=true" >> $GITHUB_ENV
+            echo "IS_PR=false" >> $GITHUB_ENV
+          else
+            echo "IS_MERGE=false" >> $GITHUB_ENV
+            echo "IS_PR=false" >> $GITHUB_ENV
+          fi
         else
           echo "IS_MERGE=false" >> $GITHUB_ENV
           echo "IS_PR=false" >> $GITHUB_ENV
         fi
       shell: bash
+
 
     - name: Determine Benchmarks to Run
       id: set-benchmarks
