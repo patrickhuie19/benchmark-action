@@ -87,6 +87,9 @@ runs:
         output-file-path: output.txt
         external-data-json-path: './cache/benchmark-data.json'
         fail-on-alert: true
+        auto-push: false
+        comment-on-alert: true
+        summary-always: true
 
     - name: Run github-action-benchmark for Merges
       if: ${{ env.IS_MERGE }} == 'true'
