@@ -56,7 +56,6 @@ runs:
         fi
       shell: bash
 
-
     - name: Determine Benchmarks to Run
       id: set-benchmarks
       run: |
@@ -70,7 +69,7 @@ runs:
 
     - name: Run Specified Go Benchmarks
       if: ${{ env.IS_PR }} == 'true' || ${{ env.IS_MERGE }} == 'true'
-      run: go test -bench "$BENCHMARKS" | tee output.txt
+      run: go test -bench "$BENCHMARKS" -run=^$ | tee output.txt
       shell: bash
 
     - name: Download Previous Benchmark Data
