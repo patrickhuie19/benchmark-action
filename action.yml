@@ -87,9 +87,6 @@ runs:
         output-file-path: output.txt
         external-data-json-path: './cache/benchmark-data.json'
         fail-on-alert: true
-        gh-pages-branch: ${{ inputs.gh-pages-branch }}
-        auto-push: ${{ env.IS_MERGE == 'true' && inputs.use-gh-pages == 'true' }}
-        github-token: ${{ inputs.github-token }}
 
     - name: Run github-action-benchmark for Merges
       if: ${{ env.IS_MERGE }} == 'true'
