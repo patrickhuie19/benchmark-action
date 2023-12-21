@@ -98,7 +98,6 @@ runs:
       with:
         tool: 'go'
         output-file-path: output.txt
-        external-data-json-path: './cache/benchmark-data.json'
         fail-on-alert: false
         comment-on-alert: true
         auto-push: ${{ inputs.use-gh-pages == 'true' }}
