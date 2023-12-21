@@ -90,6 +90,7 @@ runs:
         auto-push: false
         comment-on-alert: true
         summary-always: true
+        github-token: ${{ inputs.github-token }}
 
     - name: Run github-action-benchmark for Merges
       if: ${{ env.IS_MERGE }} == 'true'
