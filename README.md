@@ -68,7 +68,7 @@ jobs:
         uses: patrickhuie19/go-benchmark-action@v1
         with:
           benchmarks-pr: 'from-pr'  # Use benchmarks specified in PR, or default benchmarks
-          benchmarks-merges: 'BenchmarkAdd' # Default list of benchmarks to run on merges
+          benchmarks-merge: 'BenchmarkAdd' # Default list of benchmarks to run on merges
           trigger-branches: 'main,dev'  # Comma-separated list of branches for merging
           use-gh-pages: 'true'  # Enable or disable GitHub Pages
           github-token: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in GitHub token
