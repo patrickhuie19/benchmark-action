@@ -82,7 +82,7 @@ runs:
     - name: Run Specified Go Benchmarks
       # must use a context in an if conditional statement to access the value of an variable
       if: ${{ env.IS_PR == 'true' || env.IS_MERGE == 'true' }}
-      run: go test -bench "$BENCHMARKS" -run=^$ | tee output.txt
+      run: go test ./... -bench "$BENCHMARKS" -run=^$ | tee output.txt
       shell: bash
 
     - name: Download Previous Benchmark Data
